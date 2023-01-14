@@ -1,9 +1,14 @@
 ﻿
 using System.Runtime.CompilerServices;
 
-namespace ConsoleApp6;
+namespace FormulaTest;
 public static class SyntaxVisitor
 {    
+    /// <summary>
+    /// Parses the given input into a collection of syntax nodes.
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
     public static SyntaxCollection Parse(ReadOnlySpan<char> input)
     {
         var syntaxNodes = new List<SyntaxNode>();
@@ -102,37 +107,5 @@ public static class SyntaxVisitor
         }
 
         return new SyntaxCollection(syntaxNodes);
-    }
-}
-
-public class SyntaxException : Exception
-{
-    public TextSpan Location { get; }
-
-    public SyntaxException(TextSpan location, string message) : base(message)
-    {
-        Location = location;
-    }
-}
-
-public class StringLiteralSyntaxException : SyntaxException
-{
-    public StringLiteralSyntaxException(TextSpan location, string message) : base(location, message)
-    {
-    }
-}
-
-public class UnterminatedStringLiteralSyntaxException : StringLiteralSyntaxException
-{
-    public string Text { get; }
-
-    public UnterminatedStringLiteralSyntaxException(TextSpan location, string text) : base(location, GetMessage(location, text))
-    {
-        Text = text;
-    }
-
-    static string GetMessage(TextSpan location, string text)
-    {
-        return $"Unterminated string literal @ {location}: {text}";
     }
 }

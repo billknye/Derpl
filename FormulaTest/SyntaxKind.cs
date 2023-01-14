@@ -1,5 +1,5 @@
 ﻿
-namespace ConsoleApp6;
+namespace FormulaTest;
 
 public enum SyntaxKind
 {

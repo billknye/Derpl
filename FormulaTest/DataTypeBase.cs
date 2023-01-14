@@ -1,4 +1,4 @@
-﻿namespace ConsoleApp6;
+﻿namespace FormulaTest;
 
 public enum DataTypeBase
 {
@@ -8,5 +8,3 @@ public enum DataTypeBase
     Date = 3,
     Bool = 4
 }
-
-public record DataType(DataTypeBase Type, bool IsSet = false);

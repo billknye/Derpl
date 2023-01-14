@@ -1,4 +1,4 @@
-﻿namespace ConsoleApp6;
+﻿namespace FormulaTest;
 
 public class DataPropertyDefinition
 {

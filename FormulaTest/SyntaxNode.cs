@@ -1,3 +1,3 @@
 ﻿
-namespace ConsoleApp6;
+namespace FormulaTest;
 public readonly record struct SyntaxNode(SyntaxKind SyntaxKind, TextSpan Range);

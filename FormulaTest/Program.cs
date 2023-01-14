@@ -1,4 +1,4 @@
-﻿using ConsoleApp6;
+﻿using FormulaTest;
 using System.Diagnostics;
 
 
@@ -6,11 +6,12 @@ var dataSet = new DataSetDefinition
 {
     Properties = new[]
     {
-        new DataPropertyDefinition{ Name = "foo.somePropertyName", DataPropertyType = new DataType(DataTypeBase.Number) }
+        new DataPropertyDefinition{ Name = "foo.somePropertyName", DataPropertyType = new DataType(DataTypeBase.Number) },
+        new DataPropertyDefinition{ Name = "hiredate", DataPropertyType = new DataType(DataTypeBase.Date) },
     }
 };
 
-var formula = "OrderedAscending([Sum([3, 10, 33, 4]), foo.somePropertyName])"; 
+var formula = "OrderedAscending([365, Diff(now(), hiredate)])"; // "OrderedAscending([Sum([3, Diff(10, 3), Avg([13, 4])]), foo.somePropertyName])"; 
 
 var syntax = SyntaxVisitor.Parse(formula);
 
@@ -26,18 +27,7 @@ var compiled = ExpressionCompiler.Compile(formula, syntax, dataSet);
 var dataSetEvaluator = new DataSetEvaluator();
 var dataRow = new DataRow();
 dataRow.Values.Add("foo.somePropertyName", 42D);
-
+dataRow.Values.Add("hiredate", DateTimeOffset.Now.AddYears(-4));
 
 var result = compiled.Invoke(dataSetEvaluator, dataRow);
 Console.WriteLine($"Result: {result}");
-
-Stopwatch sw = Stopwatch.StartNew();
-
-for (int i =0; i < 1000000; i++)
-{
-    var result2 = compiled.Invoke(dataSetEvaluator, dataRow);
-}
-
-sw.Stop();
-
-Console.WriteLine($"Time: {sw.Elapsed.TotalMilliseconds}");

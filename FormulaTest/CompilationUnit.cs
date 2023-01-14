@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace ConsoleApp6;
+namespace FormulaTest;
 
 public class CompilationUnit
 {

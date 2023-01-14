@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 
 
-namespace ConsoleApp6;
+namespace FormulaTest;
 
 public class SyntaxCollection : IEnumerable<SyntaxNode>
 {
@@ -16,6 +16,10 @@ public class SyntaxCollection : IEnumerable<SyntaxNode>
 
     public IEnumerator<SyntaxNode> GetEnumerator() => nodes.Where(n => n.SyntaxKind != SyntaxKind.Whitespace).GetEnumerator();
 
+    /// <summary>
+    /// Returns the current node without consumeing it (taking).
+    /// </summary>
+    /// <returns></returns>
     public SyntaxNode? Peek()
     {
         var nextIndex = index;
@@ -39,6 +43,10 @@ public class SyntaxCollection : IEnumerable<SyntaxNode>
         }
     }
 
+    /// <summary>
+    /// Takes the next node.
+    /// </summary>
+    /// <returns></returns>
     public SyntaxNode? Take()
     {
         while (index < nodes.Count)
@@ -58,6 +66,12 @@ public class SyntaxCollection : IEnumerable<SyntaxNode>
         return null;
     }
 
+    /// <summary>
+    /// Take an element of the expected kind, or throw.
+    /// </summary>
+    /// <param name="kind"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
     public SyntaxNode TakeExpect(SyntaxKind kind)
     {
         while (index < nodes.Count)
@@ -85,6 +99,11 @@ public class SyntaxCollection : IEnumerable<SyntaxNode>
         throw new InvalidOperationException();
     }
 
+    /// <summary>
+    /// Take any elements of the kinds provided (or whitespace).
+    /// </summary>
+    /// <param name="kindsToTake"></param>
+    /// <returns></returns>
     public IEnumerable<SyntaxNode> TakeWhile(params SyntaxKind[] kindsToTake)
     {
         while (index < nodes.Count)

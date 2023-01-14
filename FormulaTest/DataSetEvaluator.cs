@@ -1,4 +1,4 @@
-﻿namespace ConsoleApp6;
+﻿namespace FormulaTest;
 
 public class DataSetEvaluator
 {
@@ -30,9 +30,29 @@ public class DataSetEvaluator
         return true;
     }
 
+    public DateTimeOffset EvaluateNow()
+    {
+        return DateTimeOffset.Now;
+    }
+
+    public double EvaluateDiff(DateTimeOffset left, DateTimeOffset right)
+    {
+        return (left - right).TotalDays;
+    }
+
+    public double EvaluateDiff(double left, double right)
+    {
+        return left - right;
+    }
+
     public double EvaluateSum(IReadOnlyList<double> numbers)
     {
         return numbers.Sum();
+    }
+
+    public double EvaluateAvg(IReadOnlyList<double> numbers)
+    {
+        return numbers.Average();
     }
 
     public string EvaluateConcat(IReadOnlyList<string> words)
