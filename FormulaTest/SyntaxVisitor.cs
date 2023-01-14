@@ -68,7 +68,11 @@ public static class SyntaxVisitor
                 syntaxNodes.Add(new SyntaxNode(SyntaxKind.StringLiteral, new TextSpan(current, index + 1)));
                 current += index + 1;
             }
+#if NET7_0_OR_GREATER
             else if (char.IsAsciiDigit(working[0]))
+#else
+            else if (working[0].IsAsciiDigit())
+#endif
             {
                 // numeric literal
                 var next = working.IndexOfAnyExcept(numbers);

@@ -13,18 +13,13 @@ public class DataSetEvaluator
         double? previous = null;
         foreach (var value in numbers)
         {
-            if (previous == null)
+            if (previous != null && value < previous.Value)
             {
-                previous = value;
-                continue;
+                return false;
             }
-            else
-            {
-                if (value < previous.Value)
-                {
-                    return false;
-                }
-            }
+
+            previous = value;
+            continue;
         }
 
         return true;
