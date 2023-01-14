@@ -1,4 +1,6 @@
 ﻿
+using System.Runtime.CompilerServices;
+
 namespace ConsoleApp6;
 public static class SyntaxVisitor
 {    
@@ -25,7 +27,20 @@ public static class SyntaxVisitor
                     next = working.Length;
                 }
 
-                syntaxNodes.Add(new SyntaxNode(SyntaxKind.Identifier, new TextSpan(current, next)));
+                var range = new TextSpan(current, next);
+
+                if (range.ApplyTo(input).ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+                {
+                    syntaxNodes.Add(new SyntaxNode(SyntaxKind.TrueLiteral, range));
+                }
+                else if (range.ApplyTo(input).ToString().Equals("false", StringComparison.OrdinalIgnoreCase))
+                {
+                    syntaxNodes.Add(new SyntaxNode(SyntaxKind.FalseLiteral, range));
+                }
+                else
+                {
+                    syntaxNodes.Add(new SyntaxNode(SyntaxKind.Identifier, range));
+                }
 
                 current += next;
             }
@@ -38,6 +53,11 @@ public static class SyntaxVisitor
                     if (working[index] == '\'' && working[index - 1] != '\\')
                         break;
                     index++;
+                }
+
+                if (index >= working.Length)
+                {
+                    throw new UnterminatedStringLiteralSyntaxException(new TextSpan(current, index), new TextSpan(current, index).ApplyTo(input).ToString());
                 }
 
                 syntaxNodes.Add(new SyntaxNode(SyntaxKind.StringLiteral, new TextSpan(current, index + 1)));
@@ -82,5 +102,37 @@ public static class SyntaxVisitor
         }
 
         return new SyntaxCollection(syntaxNodes);
+    }
+}
+
+public class SyntaxException : Exception
+{
+    public TextSpan Location { get; }
+
+    public SyntaxException(TextSpan location, string message) : base(message)
+    {
+        Location = location;
+    }
+}
+
+public class StringLiteralSyntaxException : SyntaxException
+{
+    public StringLiteralSyntaxException(TextSpan location, string message) : base(location, message)
+    {
+    }
+}
+
+public class UnterminatedStringLiteralSyntaxException : StringLiteralSyntaxException
+{
+    public string Text { get; }
+
+    public UnterminatedStringLiteralSyntaxException(TextSpan location, string text) : base(location, GetMessage(location, text))
+    {
+        Text = text;
+    }
+
+    static string GetMessage(TextSpan location, string text)
+    {
+        return $"Unterminated string literal @ {location}: {text}";
     }
 }

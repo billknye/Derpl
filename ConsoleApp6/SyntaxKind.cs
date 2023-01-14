@@ -8,6 +8,8 @@ public enum SyntaxKind
     Identifier,
     StringLiteral,
     NumericLiteral,
+    TrueLiteral,
+    FalseLiteral,
     DotOperator,
     Comma,
     OpenParenthesis,

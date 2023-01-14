@@ -8,34 +8,50 @@ public class DataSetEvaluator
         return value;
     }
 
-    public bool EvaluateOrderedAscending(IEnumerable<object> something)
+    public bool EvaluateOrderedAscending(IReadOnlyList<double> numbers)
     {
-        // tODO don't assume double
-
         double? previous = null;
-        foreach (var value in something)
+        foreach (var value in numbers)
         {
-            if (value is double d)
+            if (previous == null)
             {
-                if (previous == null)
-                {
-                    previous = d;
-                    continue;
-                }
-                else
-                {
-                    if (d < previous.Value)
-                    {
-                        return false;
-                    }
-                }
+                previous = value;
+                continue;
             }
             else
             {
-                return false;
+                if (value < previous.Value)
+                {
+                    return false;
+                }
             }
         }
 
         return true;
+    }
+
+    public double EvaluateSum(IReadOnlyList<double> numbers)
+    {
+        return numbers.Sum();
+    }
+
+    public string EvaluateConcat(IReadOnlyList<string> words)
+    {
+        return string.Concat(words);
+    }
+
+    public bool EvaluateAny(IReadOnlyList<bool> values)
+    {
+        return values.Any(n => n);
+    }
+
+    public bool EvaluateAll(IReadOnlyList<bool> values)
+    {
+        return values.All(n => n);
+    }
+
+    public bool EvaluateNone(IReadOnlyList<bool> values)
+    {
+        return values.All(n => !n);
     }
 }

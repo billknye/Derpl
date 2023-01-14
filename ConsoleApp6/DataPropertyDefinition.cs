@@ -4,5 +4,5 @@ public class DataPropertyDefinition
 {
     public string Name { get; set; }
 
-    public DataPropertyType DataPropertyType { get; set; }
+    public DataType DataPropertyType { get; set; }
 }

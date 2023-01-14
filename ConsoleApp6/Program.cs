@@ -1,27 +1,16 @@
 ﻿using ConsoleApp6;
-
-var examples = """
-
-orderedAscending([1, 3, 4]) -> true
-orderedDescending([5, 3, 4]) -> false
-
-sum([12, 34]) -> 46
-
-
-""";
-
+using System.Diagnostics;
 
 
 var dataSet = new DataSetDefinition
 {
     Properties = new[]
     {
-        new DataPropertyDefinition{ Name = "foo.somePropertyName", DataPropertyType = DataPropertyType.Number }
+        new DataPropertyDefinition{ Name = "foo.somePropertyName", DataPropertyType = new DataType(DataTypeBase.Number) }
     }
 };
 
-
-var formula = "OrderedAscending([40, foo.somePropertyName])"; // @"foo.somePropertyName";
+var formula = "OrderedAscending([Sum([3, 10, 33, 4]), foo.somePropertyName])"; 
 
 var syntax = SyntaxVisitor.Parse(formula);
 
@@ -41,3 +30,14 @@ dataRow.Values.Add("foo.somePropertyName", 42D);
 
 var result = compiled.Invoke(dataSetEvaluator, dataRow);
 Console.WriteLine($"Result: {result}");
+
+Stopwatch sw = Stopwatch.StartNew();
+
+for (int i =0; i < 1000000; i++)
+{
+    var result2 = compiled.Invoke(dataSetEvaluator, dataRow);
+}
+
+sw.Stop();
+
+Console.WriteLine($"Time: {sw.Elapsed.TotalMilliseconds}");
