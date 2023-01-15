@@ -12,6 +12,7 @@ public enum SyntaxKind
     FalseLiteral,
     DotOperator,
     Comma,
+    LambdaOperator,
     OpenParenthesis,
     CloseParenthesis,
     OpenSquareBracket,

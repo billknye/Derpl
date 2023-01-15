@@ -1,9 +1,6 @@
-﻿
-using System.Runtime.CompilerServices;
-
-namespace FormulaTest;
+﻿namespace FormulaTest;
 public static class SyntaxVisitor
-{    
+{
     /// <summary>
     /// Parses the given input into a collection of syntax nodes.
     /// </summary>
@@ -89,6 +86,11 @@ public static class SyntaxVisitor
                 var next = working.IndexOfAnyExcept(whitespace);
                 syntaxNodes.Add(new SyntaxNode(SyntaxKind.Whitespace, new TextSpan(current, next)));
                 current += next;
+            }
+            else if (working.Length >= 2 && working[0] == '=' && working[1] == '>')
+            {
+                syntaxNodes.Add(new SyntaxNode(SyntaxKind.LambdaOperator, new TextSpan(current, 2)));
+                current += 2;
             }
             else
             {

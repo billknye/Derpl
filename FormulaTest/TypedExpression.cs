@@ -2,4 +2,4 @@
 
 namespace FormulaTest;
 
-public record TypedExpression(Expression Expression, DataType Type);
+public record TypedExpression(Expression Expression, DataType Type, IEnumerable<ParameterExpression>? Variables = null);

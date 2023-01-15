@@ -1,17 +1,18 @@
 ﻿using FormulaTest;
-using System.Diagnostics;
 
 
 var dataSet = new DataSetDefinition
 {
     Properties = new[]
     {
-        new DataPropertyDefinition{ Name = "foo.somePropertyName", DataPropertyType = new DataType(DataTypeBase.Number) },
-        new DataPropertyDefinition{ Name = "hiredate", DataPropertyType = new DataType(DataTypeBase.Date) },
+        new DataPropertyDefinition{ Name = "foo.somePropertyName", DataPropertyType = DataType.CreateBasic(DataTypeBase.Number) },
+        new DataPropertyDefinition{ Name = "hiredate", DataPropertyType = DataType.CreateBasic(DataTypeBase.Date) },
     }
 };
 
-var formula = "OrderedAscending([365, Diff(now(), hiredate)])"; // "OrderedAscending([Sum([3, Diff(10, 3), Avg([13, 4])]), foo.somePropertyName])"; 
+var formula = "Filter([1, 2, 3, 4], foo => OrderedAscending([2, foo]))";
+// "OrderedAscending([365, Diff(now(), hiredate)])"; 
+// "OrderedAscending([Sum([3, Diff(10, 3), Avg([13, 4])]), foo.somePropertyName])"; 
 
 var syntax = SyntaxVisitor.Parse(formula);
 

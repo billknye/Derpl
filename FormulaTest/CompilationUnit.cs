@@ -10,4 +10,12 @@ public class CompilationUnit
     public SyntaxCollection Syntax { get; set; }
 
     public DataSetDefinition DataSetDefinition { get; set; }
+
+    // used in lambdas.
+    public Dictionary<string, TypedExpression> Variables { get; set; }
+
+    public CompilationUnit()
+    {
+        Variables = new Dictionary<string, TypedExpression>(StringComparer.OrdinalIgnoreCase);
+    }
 }
