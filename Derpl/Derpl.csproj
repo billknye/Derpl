@@ -5,6 +5,25 @@
     <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Version>1.0.0-20230115.0</Version>
   </PropertyGroup>
 
+	<PropertyGroup>
+		<PackageId>Derpl</PackageId>
+		<PackageProjectUrl>https://github.com/billknye/Derpl</PackageProjectUrl>
+		<Authors>Ian Rivard</Authors>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<Copyright>Copyright (c) Ian Rivard 2023</Copyright>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<RepositoryType>git</RepositoryType>
+		<RepositoryUrl>https://github.com/billknye/Derpl.git</RepositoryUrl>
+		<Description>
+			A expression parser and execution library for dot net.
+		</Description>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+	
 </Project>
