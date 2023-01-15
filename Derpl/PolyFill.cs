@@ -1,4 +1,4 @@
-﻿namespace FormulaTest;
+﻿namespace Derpl;
 #if !NET7_0_OR_GREATER
 
 public static class PolyFill

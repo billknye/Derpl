@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Linq.Expressions;
 
-namespace FormulaTest;
+namespace Derpl;
 
 public class DataSetEvaluator
 {

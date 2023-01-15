@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Text;
 
-namespace FormulaTest;
+namespace Derpl;
 
 public static class ExpressionCompiler
 {

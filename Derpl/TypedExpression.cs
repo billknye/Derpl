@@ -1,5 +1,5 @@
 ﻿using System.Linq.Expressions;
 
-namespace FormulaTest;
+namespace Derpl;
 
 public record TypedExpression(Expression Expression, DataType Type, IEnumerable<ParameterExpression>? Variables = null);

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 
 
-namespace FormulaTest;
+namespace Derpl;
 
 public class SyntaxCollection : IEnumerable<SyntaxNode>
 {

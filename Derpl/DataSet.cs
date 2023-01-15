@@ -1,4 +1,4 @@
-﻿namespace FormulaTest;
+﻿namespace Derpl;
 
 public class DataSet
 {
