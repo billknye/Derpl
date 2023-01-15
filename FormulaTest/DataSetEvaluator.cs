@@ -33,7 +33,7 @@ public class DataSetEvaluator
         return DateTimeOffset.Now;
     }
 
-    public double EvaluateDurationBetween(DateTimeOffset left, DateTimeOffset right)
+    public double EvaluateDiff(DateTimeOffset left, DateTimeOffset right)
     {
         return (left - right).TotalDays;
     }
@@ -77,23 +77,31 @@ public class DataSetEvaluator
         LambdaExpressionParameter<IReadOnlyList<double>> values,
         LambdaExpressionArguments<double, bool> lambda)
     {
-        /*ar list = Expression.Variable(typeof(List<double>), "EvaluateFilterList");
+        var body = ExpressionSetToSetBuilder<double, double>(
+            values.Variable,
+            lambda.Variable,
+            n => Expression.IfThen(lambda.Iterator, n.AddMethod(n.element)));
 
-        var block = Expression.Block(typeof(IReadOnlyList<double>), new[] { lambda.Variable, list }, list);
-        return new LambdaExpressionReturn<IReadOnlyList<double>>(block);*/
+        return new LambdaExpressionReturn<IReadOnlyList<double>>(body);
+    }
 
+    private static Expression ExpressionSetToSetBuilder<TElementInputType, TElementOutputType>(
+    Expression input,
+    ParameterExpression lambdaVariable,
+    Func<(Func<Expression, Expression> AddMethod, ParameterExpression element), Expression> builder)
+    {
         // declare list to receive elements
-        var listVar = Expression.Variable(typeof(List<double>), "EvaluateFilterList");
-        var addMethod = typeof(List<double>).GetMethod("Add");
-        var listCtor = typeof(List<double>).GetConstructor(Type.EmptyTypes);
+        var listVar = Expression.Variable(typeof(List<TElementOutputType>), "EvaluateFilterList");
+        var addMethod = typeof(List<TElementOutputType>).GetMethod("Add");
+        var listCtor = typeof(List<TElementOutputType>).GetConstructor(Type.EmptyTypes);
 
         // boiler plate
-        var elementType = lambda.Variable.Type;
+        var elementType = typeof(TElementInputType);
         var enumerableType = typeof(IEnumerable<>).MakeGenericType(elementType);
         var enumeratorType = typeof(IEnumerator<>).MakeGenericType(elementType);
 
         var enumeratorVar = Expression.Variable(enumeratorType, "enumerator");
-        var getEnumeratorCall = Expression.Call(values.Variable, enumerableType.GetMethod("GetEnumerator"));
+        var getEnumeratorCall = Expression.Call(input, enumerableType.GetMethod("GetEnumerator"));
         var enumeratorAssign = Expression.Assign(enumeratorVar, getEnumeratorCall);
 
         // The MoveNext method's actually on IEnumerator, not IEnumerator<T>
@@ -108,11 +116,13 @@ public class DataSetEvaluator
             Expression.Loop(
                 Expression.IfThenElse(
                     Expression.Equal(moveNextCall, Expression.Constant(true)),
-                    Expression.Block(new[] { lambda.Variable },
-                        Expression.Assign(lambda.Variable, Expression.Property(enumeratorVar, "Current")),
+                    Expression.Block(new[] { lambdaVariable },
+                        Expression.Assign(lambdaVariable, Expression.Property(enumeratorVar, "Current")),
 
-                        // call experssion and add to list if true
-                        Expression.IfThen(lambda.Iterator, Expression.Call(listVar, addMethod, lambda.Variable))
+                        builder.Invoke((n => Expression.Call(listVar, addMethod, n), lambdaVariable))
+
+                    // call experssion and add to list if true
+                    // Expression.IfThen(lambda.Iterator, Expression.Call(listVar, addMethod, lambda.Variable))
                     ),
                     Expression.Break(breakLabel)
                 ),
@@ -120,9 +130,9 @@ public class DataSetEvaluator
 
             // what to return from this expression.
             listVar
-        );
+        ); ;
 
-        return new LambdaExpressionReturn<IReadOnlyList<double>>(loop);
+        return loop;
     }
 }
 

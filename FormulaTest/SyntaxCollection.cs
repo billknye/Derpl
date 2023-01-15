@@ -8,13 +8,27 @@ public class SyntaxCollection : IEnumerable<SyntaxNode>
     private readonly IReadOnlyList<SyntaxNode> nodes;
     private int index;
 
+    private Stack<int> indexStack;
+
     public SyntaxCollection(IReadOnlyList<SyntaxNode> nodes)
     {
         this.nodes = nodes;
         this.index = 0;
+
+        indexStack = new Stack<int>();
     }
 
     public IEnumerator<SyntaxNode> GetEnumerator() => nodes.Where(n => n.SyntaxKind != SyntaxKind.Whitespace).GetEnumerator();
+
+    public void PushState()
+    {
+        indexStack.Push(index);
+    }
+
+    public void PopState()
+    {
+        index = indexStack.Pop();
+    }
 
     /// <summary>
     /// Returns the current node without consumeing it (taking).
@@ -92,7 +106,7 @@ public class SyntaxCollection : IEnumerable<SyntaxNode>
             }
             else
             {
-                throw new InvalidOperationException();
+                throw new InvalidOperationException($"Expected {kind}, Got: {node.SyntaxKind}");
             }
         }
 

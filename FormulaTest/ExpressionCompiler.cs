@@ -85,14 +85,13 @@ public static class ExpressionCompiler
         if (compilationUnit.Variables.TryGetValue(identifier, out var variable))
         {
             return variable;
-            //throw new NotImplementedException();
         }
         else
         {
-            var internalMethod = ResolveInternalIdentifier(identifier);
-            if (internalMethod != null)
+            var internalMethods = ResolveInternalIdentifier(identifier);
+            if (internalMethods != null && internalMethods.Length > 0)
             {
-                return ResolveInternalMethod(internalMethod, compilationUnit, input);
+                return ResolveInternalMethod(internalMethods, compilationUnit, input);
             }
             else if (compilationUnit.Syntax.Peek()?.SyntaxKind == SyntaxKind.LambdaOperator)
             {
@@ -114,11 +113,6 @@ public static class ExpressionCompiler
         compilationUnit.Variables.Add(identifier, new TypedExpression(variableDeclaration, expectedType.Parameters.First()));
 
         var lambdaBodyExpression = ResolveTerm(compilationUnit, input, expectedType.ReturnType);
-
-        //var lambdaType = typeof(LambdaExpressionArguments<,>).MakeGenericType(expectedType.Parameters.First().ToNetType(), expectedType.ReturnType.ToNetType());
-        //var lambda = Activator.CreateInstance(lambdaType, variableDeclaration, lambdaBodyExpression);
-        //var result = 
-
         compilationUnit.Variables.Remove(identifier);
 
         return new TypedExpression(lambdaBodyExpression.Expression, expectedType, new[] { variableDeclaration });
@@ -220,58 +214,70 @@ public static class ExpressionCompiler
     /// <param name="compilationUnit"></param>
     /// <param name="input"></param>
     /// <returns></returns>
-    private static TypedExpression ResolveInternalMethod(MethodInfo methodInfo, CompilationUnit compilationUnit, ReadOnlySpan<char> input)
+    private static TypedExpression ResolveInternalMethod(MethodInfo[] methodInfos, CompilationUnit compilationUnit, ReadOnlySpan<char> input)
     {
         _ = compilationUnit.Syntax.TakeExpect(SyntaxKind.OpenParenthesis);
 
-        var methodParamTypes = GetMethodParameterDataTypes(methodInfo);
-        var methodReturnType = GetMethodReturnDataType(methodInfo);
-
-        List<TypedExpression> arguments = GetArguments(compilationUnit, input, methodParamTypes?.Select(n => n.Type).ToArray());
-
-        _ = compilationUnit.Syntax.TakeExpect(SyntaxKind.CloseParenthesis);
-
-        var match = true;
-        for (int i = 0; i < methodParamTypes.Length; i++)
+        foreach (var methodInfo in methodInfos)
         {
-            if (!methodParamTypes[i].Type.IsCompatableWith(arguments[i].Type))
+            var methodParamTypes = GetMethodParameterDataTypes(methodInfo);
+            var methodReturnType = GetMethodReturnDataType(methodInfo);
+
+            compilationUnit.Syntax.PushState();
+
+            try
             {
-                match = false;
-                break;
-            }
-        }
+                var arguments = GetArguments(compilationUnit, input, methodParamTypes?.Select(n => n.Type).ToArray());
 
-        if (match)
-        {
-            // check if method is compile time expanded
-            if (methodInfo.ReturnType.IsGenericType && methodInfo.ReturnType.GetGenericTypeDefinition() == typeof(LambdaExpressionReturn<>))
-            {
-                //var type = arguments.Select(n => n.Type.ToLambdaNetType());
+                _ = compilationUnit.Syntax.TakeExpect(SyntaxKind.CloseParenthesis);
 
-                var targs = new List<object>();
-
-                foreach (var arg in arguments)
+                var match = true;
+                for (int i = 0; i < methodParamTypes.Length; i++)
                 {
-                    if (arg.Type.IsFunction)
+                    if (!methodParamTypes[i].Type.IsCompatableWith(arguments[i].Type))
                     {
-                        // todo handle multiple arguments
-                        targs.Add(Activator.CreateInstance(arg.Type.ToLambdaNetType(), arg.Variables.First(), arg.Expression));
-                    }
-                    else
-                    {
-                        targs.Add(Activator.CreateInstance(arg.Type.ToLambdaNetType(), arg.Expression));
+                        match = false;
+                        break;
                     }
                 }
 
-                // TODO should this live in a different, maybe static evaluator and not new'd up here?
-                var ret = methodInfo.Invoke(new DataSetEvaluator(), targs.ToArray()) as LambdaExpressionReturn;
+                if (match)
+                {
+                    // check if method is compile time expanded
+                    if (methodInfo.ReturnType.IsGenericType && methodInfo.ReturnType.GetGenericTypeDefinition() == typeof(LambdaExpressionReturn<>))
+                    {
+                        var targs = new List<object>();
 
-                return new TypedExpression(ret.Expression, methodReturnType);
+                        foreach (var arg in arguments)
+                        {
+                            if (arg.Type.IsFunction)
+                            {
+                                // todo handle multiple arguments
+                                targs.Add(Activator.CreateInstance(arg.Type.ToLambdaNetType(), arg.Variables.First(), arg.Expression));
+                            }
+                            else
+                            {
+                                targs.Add(Activator.CreateInstance(arg.Type.ToLambdaNetType(), arg.Expression));
+                            }
+                        }
+
+                        // TODO should this live in a different, maybe static evaluator and not new'd up here?
+                        var ret = methodInfo.Invoke(new DataSetEvaluator(), targs.ToArray()) as LambdaExpressionReturn;
+
+                        return new TypedExpression(ret.Expression, methodReturnType);
+                    }
+                    else
+                    {
+                        return new TypedExpression(Expression.Call(compilationUnit.EvaluatorParameter, methodInfo, arguments.Select(n => n.Expression).ToArray()), methodReturnType);
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return new TypedExpression(Expression.Call(compilationUnit.EvaluatorParameter, methodInfo, arguments.Select(n => n.Expression).ToArray()), methodReturnType);
+                // TODO Didn't match in a bad way
             }
+
+            compilationUnit.Syntax.PopState();
         }
 
         throw new InvalidOperationException("Could not find method that matches the signature.");
@@ -314,14 +320,14 @@ public static class ExpressionCompiler
     /// </summary>
     /// <param name="identifier"></param>
     /// <returns></returns>
-    private static MethodInfo? ResolveInternalIdentifier(string identifier)
+    private static MethodInfo[] ResolveInternalIdentifier(string identifier)
     {
         var targetMethodName = $"Evaluate{identifier}";
 
         return typeof(DataSetEvaluator)
             .GetMethods(BindingFlags.Instance | BindingFlags.Public)
             .Where(n => n.Name.Equals(targetMethodName, StringComparison.OrdinalIgnoreCase))
-            .FirstOrDefault();
+            .ToArray();
     }
 
     /// <summary>
