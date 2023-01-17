@@ -1,5 +1,5 @@
 # Derpl
-A expression parser and execution library for dot net.
+An expression parser and execution library for dot net.
 
 ## About
 This exists becauase someone was talking about formula parsing from user

@@ -1,2 +1,2 @@
 # Derpl
-A expression parser and execution library for dot net.
+An expression parser and execution library for dot net.

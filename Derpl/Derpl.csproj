@@ -21,7 +21,7 @@
 		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/billknye/Derpl.git</RepositoryUrl>
 		<Description>
-A expression parser and execution library for dot net.
+An expression parser and execution library for dot net.
 		</Description>
 	</PropertyGroup>
 
