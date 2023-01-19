@@ -3,14 +3,14 @@
 
 namespace Derpl;
 
-public class SyntaxCollection : IEnumerable<SyntaxNode>
+public class TokenCollection : IEnumerable<TokenNode>
 {
-    private readonly IReadOnlyList<SyntaxNode> nodes;
+    private readonly IReadOnlyList<TokenNode> nodes;
     private int index;
 
     private Stack<int> indexStack;
 
-    public SyntaxCollection(IReadOnlyList<SyntaxNode> nodes)
+    public TokenCollection(IReadOnlyList<TokenNode> nodes)
     {
         this.nodes = nodes;
         this.index = 0;
@@ -18,7 +18,7 @@ public class SyntaxCollection : IEnumerable<SyntaxNode>
         indexStack = new Stack<int>();
     }
 
-    public IEnumerator<SyntaxNode> GetEnumerator() => nodes.Where(n => n.SyntaxKind != SyntaxKind.Whitespace).GetEnumerator();
+    public IEnumerator<TokenNode> GetEnumerator() => nodes.Where(n => n.TokenKind != TokenKind.Whitespace).GetEnumerator();
 
     public void PushState()
     {
@@ -34,7 +34,7 @@ public class SyntaxCollection : IEnumerable<SyntaxNode>
     /// Returns the current node without consumeing it (taking).
     /// </summary>
     /// <returns></returns>
-    public SyntaxNode? Peek()
+    public TokenNode? Peek()
     {
         var nextIndex = index;
         while (true)
@@ -46,7 +46,7 @@ public class SyntaxCollection : IEnumerable<SyntaxNode>
 
             var next = nodes[nextIndex];
 
-            if (next.SyntaxKind == SyntaxKind.Whitespace)
+            if (next.TokenKind == TokenKind.Whitespace)
             {
                 nextIndex++;
             }
@@ -61,14 +61,14 @@ public class SyntaxCollection : IEnumerable<SyntaxNode>
     /// Takes the next node.
     /// </summary>
     /// <returns></returns>
-    public SyntaxNode? Take()
+    public TokenNode? Take()
     {
         while (index < nodes.Count)
         {
             var node = nodes[index];
 
             // skip whitespace
-            if (node.SyntaxKind == SyntaxKind.Whitespace)
+            if (node.TokenKind == TokenKind.Whitespace)
             {
                 index++;
                 continue;
@@ -86,27 +86,27 @@ public class SyntaxCollection : IEnumerable<SyntaxNode>
     /// <param name="kind"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public SyntaxNode TakeExpect(SyntaxKind kind)
+    public TokenNode TakeExpect(TokenKind kind)
     {
         while (index < nodes.Count)
         {
             var node = nodes[index];
 
             // skip whitespace
-            if (node.SyntaxKind == SyntaxKind.Whitespace)
+            if (node.TokenKind == TokenKind.Whitespace)
             {
                 index++;
                 continue;
             }
 
-            if (node.SyntaxKind == kind)
+            if (node.TokenKind == kind)
             {
                 index++;
                 return node;
             }
             else
             {
-                throw new InvalidOperationException($"Expected {kind}, Got: {node.SyntaxKind}");
+                throw new InvalidOperationException($"Expected {kind}, Got: {node.TokenKind}");
             }
         }
 
@@ -118,20 +118,20 @@ public class SyntaxCollection : IEnumerable<SyntaxNode>
     /// </summary>
     /// <param name="kindsToTake"></param>
     /// <returns></returns>
-    public IEnumerable<SyntaxNode> TakeWhile(params SyntaxKind[] kindsToTake)
+    public IEnumerable<TokenNode> TakeWhile(params TokenKind[] kindsToTake)
     {
         while (index < nodes.Count)
         {
             var node = nodes[index];
 
             // skip whitespace
-            if (node.SyntaxKind == SyntaxKind.Whitespace)
+            if (node.TokenKind == TokenKind.Whitespace)
             {
                 index++;
                 continue;
             }
 
-            if (kindsToTake.Contains(node.SyntaxKind))
+            if (kindsToTake.Contains(node.TokenKind))
             {
                 yield return node;
                 index++;

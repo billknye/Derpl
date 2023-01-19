@@ -10,7 +10,7 @@ public class SyntaxVisitorTests
     {
         Assert.Throws(exceptionType, () =>
         {
-            var syntax = SyntaxVisitor.Parse(input);
+            var syntax = Tokenizer.Parse(input);
         });
     }
 }

@@ -14,7 +14,7 @@ public class CompilerTests
     [InlineData("All([true, true])", true)]
     public void Test1(string formula, object expected)
     {
-        var syntax = SyntaxVisitor.Parse(formula);
+        var syntax = Tokenizer.Parse(formula);
         var compiled = ExpressionCompiler.Compile(formula, syntax, new DataSetDefinition());
 
         Assert.Equal(expected, compiled.Invoke(new DataSetEvaluator(), new DataRow()));

@@ -23,14 +23,14 @@ public static class ExpressionCompiler
     /// Compiles the given syntax input, syntax tree and data set definition into an invokable func the evaluate the compiled expression.
     /// </summary>
     /// <param name="input">The raw input.</param>
-    /// <param name="syntax">The parsed syntax tree from the <see cref="SyntaxVisitor"/>.</param>
+    /// <param name="syntax">The parsed syntax tree from the <see cref="Tokenizer"/>.</param>
     /// <param name="dataSet">A <see cref="DataSetDefinition"/> instance to bind property lookups from.</param>
     /// <returns></returns>
-    public static Func<DataSetEvaluator, DataRow, object> Compile(ReadOnlySpan<char> input, SyntaxCollection syntax, DataSetDefinition dataSet)
+    public static Func<DataSetEvaluator, DataRow, object> Compile(ReadOnlySpan<char> input, TokenCollection syntax, DataSetDefinition dataSet)
     {
         var compilationUnit = new CompilationUnit
         {
-            Syntax = syntax,
+            Tokens = syntax,
             DataSetDefinition = dataSet,
             EvaluatorParameter = Expression.Parameter(typeof(DataSetEvaluator)),
             RowExpression = Expression.Parameter(typeof(DataRow))
@@ -53,20 +53,20 @@ public static class ExpressionCompiler
     /// <returns>A <see cref="TypedExpression"/> instance of the expression to evalute and the type that results.</returns>
     private static TypedExpression ResolveTerm(CompilationUnit compilationUnit, ReadOnlySpan<char> input, DataType? expectedType = null)
     {
-        var term = compilationUnit.Syntax.Peek();
+        var term = compilationUnit.Tokens.Peek();
         if (term == null)
         {
             throw new InvalidOperationException();
         }
 
-        return term.Value.SyntaxKind switch
+        return term.Value.TokenKind switch
         {
-            SyntaxKind.Identifier => ResolveIdentifier(compilationUnit, input, expectedType),
-            SyntaxKind.OpenSquareBracket => ResolveSetDeclaration(compilationUnit, input),
-            SyntaxKind.NumericLiteral => ResolveNumericLiteral(compilationUnit, input, term),
-            SyntaxKind.StringLiteral => ResolveStringLiteral(compilationUnit, input, term),
-            SyntaxKind.TrueLiteral => ResolveTrueLiteral(compilationUnit),
-            SyntaxKind.FalseLiteral => ResolveFalseLiteral(compilationUnit),
+            TokenKind.Identifier => ResolveIdentifier(compilationUnit, input, expectedType),
+            TokenKind.OpenSquareBracket => ResolveSetDeclaration(compilationUnit, input),
+            TokenKind.NumericLiteral => ResolveNumericLiteral(compilationUnit, input, term),
+            TokenKind.StringLiteral => ResolveStringLiteral(compilationUnit, input, term),
+            TokenKind.TrueLiteral => ResolveTrueLiteral(compilationUnit),
+            TokenKind.FalseLiteral => ResolveFalseLiteral(compilationUnit),
             _ => throw new NotImplementedException()
         };
     }
@@ -79,7 +79,7 @@ public static class ExpressionCompiler
     /// <returns>A <see cref="TypedExpression"/> instance of the expression to evlauate and the type that results.</returns>
     private static TypedExpression ResolveIdentifier(CompilationUnit compilationUnit, ReadOnlySpan<char> input, DataType? expectedType = null)
     {
-        var identifierSet = compilationUnit.Syntax.TakeWhile(SyntaxKind.Identifier, SyntaxKind.DotOperator);
+        var identifierSet = compilationUnit.Tokens.TakeWhile(TokenKind.Identifier, TokenKind.DotOperator);
         var identifier = FlattenIdentifier(input, identifierSet);
 
         if (compilationUnit.Variables.TryGetValue(identifier, out var variable))
@@ -93,7 +93,7 @@ public static class ExpressionCompiler
             {
                 return ResolveInternalMethod(internalMethods, compilationUnit, input);
             }
-            else if (compilationUnit.Syntax.Peek()?.SyntaxKind == SyntaxKind.LambdaOperator)
+            else if (compilationUnit.Tokens.Peek()?.TokenKind == TokenKind.LambdaOperator)
             {
                 return ResolveLambdaExpression(compilationUnit, input, identifier, expectedType ?? throw new InvalidOperationException("Lambda expressions must be implicitly typed."));
             }
@@ -106,7 +106,7 @@ public static class ExpressionCompiler
 
     private static TypedExpression ResolveLambdaExpression(CompilationUnit compilationUnit, ReadOnlySpan<char> input, string identifier, DataType expectedType)
     {
-        _ = compilationUnit.Syntax.TakeExpect(SyntaxKind.LambdaOperator);
+        _ = compilationUnit.Tokens.TakeExpect(TokenKind.LambdaOperator);
 
         // TODO real scope?
         var variableDeclaration = Expression.Variable(expectedType.Parameters.First().ToNetType(), "iterator");
@@ -125,7 +125,7 @@ public static class ExpressionCompiler
     /// <returns></returns>
     private static TypedExpression ResolveFalseLiteral(CompilationUnit compilationUnit)
     {
-        _ = compilationUnit.Syntax.TakeExpect(SyntaxKind.FalseLiteral);
+        _ = compilationUnit.Tokens.TakeExpect(TokenKind.FalseLiteral);
         return new TypedExpression(Expression.Constant(false), DataType.CreateBasic(DataTypeBase.Bool));
     }
 
@@ -136,7 +136,7 @@ public static class ExpressionCompiler
     /// <returns></returns>
     private static TypedExpression ResolveTrueLiteral(CompilationUnit compilationUnit)
     {
-        _ = compilationUnit.Syntax.TakeExpect(SyntaxKind.TrueLiteral);
+        _ = compilationUnit.Tokens.TakeExpect(TokenKind.TrueLiteral);
         return new TypedExpression(Expression.Constant(true), DataType.CreateBasic(DataTypeBase.Bool));
     }
 
@@ -147,9 +147,9 @@ public static class ExpressionCompiler
     /// <param name="input"></param>
     /// <param name="term"></param>
     /// <returns></returns>
-    private static TypedExpression ResolveStringLiteral(CompilationUnit compilationUnit, ReadOnlySpan<char> input, SyntaxNode? term)
+    private static TypedExpression ResolveStringLiteral(CompilationUnit compilationUnit, ReadOnlySpan<char> input, TokenNode? term)
     {
-        _ = compilationUnit.Syntax.TakeExpect(SyntaxKind.StringLiteral);
+        _ = compilationUnit.Tokens.TakeExpect(TokenKind.StringLiteral);
         return new TypedExpression(Expression.Constant(term.Value.Range.ApplyTo(input)[1..^1].ToString()), DataType.CreateBasic(DataTypeBase.String));
     }
 
@@ -160,9 +160,9 @@ public static class ExpressionCompiler
     /// <param name="input"></param>
     /// <param name="term"></param>
     /// <returns></returns>
-    private static TypedExpression ResolveNumericLiteral(CompilationUnit compilationUnit, ReadOnlySpan<char> input, SyntaxNode? term)
+    private static TypedExpression ResolveNumericLiteral(CompilationUnit compilationUnit, ReadOnlySpan<char> input, TokenNode? term)
     {
-        _ = compilationUnit.Syntax.TakeExpect(SyntaxKind.NumericLiteral);
+        _ = compilationUnit.Tokens.TakeExpect(TokenKind.NumericLiteral);
         return new TypedExpression(Expression.Constant(double.Parse(term.Value.Range.ApplyTo(input).ToString())), DataType.CreateBasic(DataTypeBase.Number));
     }
 
@@ -178,9 +178,9 @@ public static class ExpressionCompiler
     private static TypedExpression ResolveSetDeclaration(CompilationUnit compilationUnit, ReadOnlySpan<char> input)
     {
         // read terms in the set []
-        _ = compilationUnit.Syntax.TakeExpect(SyntaxKind.OpenSquareBracket);
+        _ = compilationUnit.Tokens.TakeExpect(TokenKind.OpenSquareBracket);
         var expressions = GetArguments(compilationUnit, input);
-        _ = compilationUnit.Syntax.TakeExpect(SyntaxKind.CloseSquareBracket);
+        _ = compilationUnit.Tokens.TakeExpect(TokenKind.CloseSquareBracket);
 
         var setType = expressions[0].Type;
         if (expressions.Any(n => !n.Type.IsCompatableWith(setType)))
@@ -216,20 +216,20 @@ public static class ExpressionCompiler
     /// <returns></returns>
     private static TypedExpression ResolveInternalMethod(MethodInfo[] methodInfos, CompilationUnit compilationUnit, ReadOnlySpan<char> input)
     {
-        _ = compilationUnit.Syntax.TakeExpect(SyntaxKind.OpenParenthesis);
+        _ = compilationUnit.Tokens.TakeExpect(TokenKind.OpenParenthesis);
 
         foreach (var methodInfo in methodInfos)
         {
             var methodParamTypes = GetMethodParameterDataTypes(methodInfo);
             var methodReturnType = GetMethodReturnDataType(methodInfo);
 
-            compilationUnit.Syntax.PushState();
+            compilationUnit.Tokens.PushState();
 
             try
             {
                 var arguments = GetArguments(compilationUnit, input, methodParamTypes?.Select(n => n.Type).ToArray());
 
-                _ = compilationUnit.Syntax.TakeExpect(SyntaxKind.CloseParenthesis);
+                _ = compilationUnit.Tokens.TakeExpect(TokenKind.CloseParenthesis);
 
                 var match = true;
                 for (int i = 0; i < methodParamTypes.Length; i++)
@@ -277,7 +277,7 @@ public static class ExpressionCompiler
                 // TODO Didn't match in a bad way
             }
 
-            compilationUnit.Syntax.PopState();
+            compilationUnit.Tokens.PopState();
         }
 
         throw new InvalidOperationException("Could not find method that matches the signature.");
@@ -293,17 +293,17 @@ public static class ExpressionCompiler
     {
         var arguments = new List<TypedExpression>();
 
-        var next = compilationUnit.Syntax.Peek();
-        if (next?.SyntaxKind != SyntaxKind.CloseParenthesis && next?.SyntaxKind != SyntaxKind.CloseSquareBracket)
+        var next = compilationUnit.Tokens.Peek();
+        if (next?.TokenKind != TokenKind.CloseParenthesis && next?.TokenKind != TokenKind.CloseSquareBracket)
         {
             int argumentIndex = 0;
             var expectedType = expectedTypes != null && expectedTypes.Length > argumentIndex ? expectedTypes[argumentIndex] : null;
 
             arguments.Add(ResolveTerm(compilationUnit, input, expectedType));
 
-            while (compilationUnit.Syntax.Peek()?.SyntaxKind == SyntaxKind.Comma)
+            while (compilationUnit.Tokens.Peek()?.TokenKind == TokenKind.Comma)
             {
-                _ = compilationUnit.Syntax.TakeExpect(SyntaxKind.Comma);
+                _ = compilationUnit.Tokens.TakeExpect(TokenKind.Comma);
                 argumentIndex++;
                 expectedType = expectedTypes != null && expectedTypes.Length > argumentIndex ? expectedTypes[argumentIndex] : null;
 
@@ -382,18 +382,18 @@ public static class ExpressionCompiler
     /// <param name="input"></param>
     /// <param name="identifierNodes"></param>
     /// <returns></returns>
-    private static string FlattenIdentifier(ReadOnlySpan<char> input, IEnumerable<SyntaxNode> identifierNodes)
+    private static string FlattenIdentifier(ReadOnlySpan<char> input, IEnumerable<TokenNode> identifierNodes)
     {
         var stringBuilder = new StringBuilder(100);
 
         foreach (var node in identifierNodes)
         {
-            switch (node.SyntaxKind)
+            switch (node.TokenKind)
             {
-                case SyntaxKind.Identifier:
+                case TokenKind.Identifier:
                     stringBuilder.Append(node.Range.ApplyTo(input));
                     break;
-                case SyntaxKind.DotOperator:
+                case TokenKind.DotOperator:
                     stringBuilder.Append('.');
                     break;
                 default:

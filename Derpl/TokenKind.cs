@@ -1,7 +1,7 @@
 ﻿
 namespace Derpl;
 
-public enum SyntaxKind
+public enum TokenKind
 {
     Unknown,
     Whitespace,
