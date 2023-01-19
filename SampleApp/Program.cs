@@ -13,6 +13,8 @@ var formula = "Filter([1, 2, 3, 4], foo => OrderedAscending([2, foo]))";
 //"[OrderedAscending([365, Diff(now(), hiredate)]), OrderedAscending([1, Diff(3, 2)])]";
 // "OrderedAscending([Sum([3, Diff(10, 3), Avg([13, 4])]), foo.somePropertyName])"; 
 
+var a = new SyntaxStore(formula);
+
 var syntax = SyntaxVisitor.Parse(formula);
 
 foreach (var node in syntax)
